@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GERAS: Detecting Gender and Age Using Voice</title>
+    <style>
+        /* Estilos CSS para una apariencia más vistosa y profesional */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            text-align: center;
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 100%;
+        }
+        h1 {
+            color: #007bff;
+            font-size: 36px;
+            margin-bottom: 10px;
+            margin-top: 0;
+        }
+        h3 {
+            font-weight: normal;
+            color: #6c757d;
+            margin-bottom: 20px;
+            margin-top: 0;
+        }
+        button {
+            padding: 12px 32px;
+            font-size: 18px;
+            background-color: #007bff;
+            color: #fff;
+            border: 2px solid #007bff;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+            outline: none;
+            margin-top: 30px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        button:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #bcbcbc;
+            border-color: #bcbcbc;
+            cursor: not-allowed;
+        }
+        #buttonsContainer {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        #status {
+            margin-top: 20px;
+            color: #6c757d;
+            font-size: 16px;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 180px; /* Ajusta la altura según sea necesario */
+            background-color: #e9ecef; /* Color de fondo del canvas */
+            border-radius: 6px;
+            margin-top: 30px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+        audio {
+            width: 100%;
+            margin-top: 20px;
+            display: none;
+        }
+        #audioContainer {
+            margin-top: 20px;
+            text-align: center;
+        }
+        #audioTitle {
+            margin-top: 10px;
+            color: #6c757d;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>GERAS</h1>
+        <h3>Detecting gender and age using voice</h3>
+        <canvas id="visualizer"></canvas>
+        <div id="buttonsContainer">
+            <button id="startRecord">Start Recording</button>
+            <button id="stopRecord" style="display:none;" disabled>Stop Recording</button>
+        </div>
+        <p id="status">Click "Start Recording" to begin</p>
+        <div id="audioContainer">
+            <p id="audioTitle" style="display:none;"></p>
+            <audio id="recordedAudio" controls></audio>
+        </div>
+    </div>
+
+    <script>
+        const startRecordButton = document.getElementById('startRecord');
+        const stopRecordButton = document.getElementById('stopRecord');
+        const statusText = document.getElementById('status');
+        const visualizer = document.getElementById('visualizer');
+        const canvasCtx = visualizer.getContext('2d');
+        const recordedAudio = document.getElementById('recordedAudio');
+        const audioTitle = document.getElementById('audioTitle');
+        const audioContainer = document.getElementById('audioContainer');
+
+        let mediaRecorder;
+        let chunks = [];
+        let audioContext;
+        let analyser;
+        let dataArray;
+        let animationId;
+        let recordingStartedAt;
+
+        startRecordButton.addEventListener('click', async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 2048;
+                const bufferLength = analyser.frequencyBinCount;
+                dataArray = new Uint8Array(bufferLength);
+
+                const source = audioContext.createMediaStreamSource(stream);
+                source.connect(analyser);
+
+                clearVisualizer();
+                visualize();
+
+                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.ondataavailable = (event) => {
+                    chunks.push(event.data);
+                };
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(chunks, { type: 'audio/wav' });
+                    const formData = new FormData();
+                    formData.append('audio', blob, 'recording.wav');
+
+                    fetch('https://python-quality-fully.ngrok-free.app/process_audio', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Server response:', data);
+                        statusText.textContent = `GENDER: ${data.gender}, AGE: ${data.age}`;
+                        recordedAudio.src = URL.createObjectURL(blob);
+                        recordedAudio.style.display = 'block';
+                        audioTitle.style.display = 'block';
+                        cancelAnimationFrame(animationId); // Detener la animación
+                        startRecordButton.disabled = false;
+                        startRecordButton.style.display = 'inline-block';
+                        stopRecordButton.style.display = 'none';
+                    })
+                    .catch(error => {
+                        console.error('Error sending file:', error);
+                        statusText.textContent = 'Error sending file';
+                    });
+
+                    chunks = []; // Limpiar chunks para la próxima grabación
+                    mediaRecorder = null; // Reiniciar el mediaRecorder
+                    clearVisualizer(); // Limpiar visualizador después de la grabación
+                };
+
+                mediaRecorder.start();
+                recordingStartedAt = Date.now(); // Marcar el inicio de la grabación
+                startRecordButton.style.display = 'none';
+                stopRecordButton.style.display = 'inline-block';
+                stopRecordButton.disabled = true; // Deshabilitar el botón de detener inicialmente
+                setStatusTextWhileRecording();
+
+                // Esperar 5 segundos antes de habilitar el botón de detener
+                setTimeout(() => {
+                    stopRecordButton.disabled = false;
+                    stopRecordButton.textContent = 'Stop Recording';
+                }, 5000);
+            } catch (error) {
+                console.error('Error accessing audio device:', error);
+                statusText.textContent = 'Could not access microphone';
+            }
+        });
+
+        stopRecordButton.addEventListener('click', () => {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                stopRecordButton.disabled = true;
+                statusText.textContent = 'Processing...';
+            }
+        });
+
+        function visualize() {
+            const WIDTH = visualizer.width;
+            const HEIGHT = visualizer.height;
+
+            canvasCtx.clearRect(0, 0, WIDTH, HEIGHT);
+
+            analyser.getByteTimeDomainData(dataArray);
+
+            canvasCtx.fillStyle = '#ffffff';
+            canvasCtx.fillRect(0, 0, WIDTH, HEIGHT);
+
+            canvasCtx.lineWidth = 2;
+            canvasCtx.strokeStyle = '#007bff';
+
+            canvasCtx.beginPath();
+
+            const sliceWidth = WIDTH * 1.0 / dataArray.length;
+            let x = 0;
+
+            for (let i = 0; i < dataArray.length; i++) {
+                const v = dataArray[i] / 128.0;
+                const y = v * HEIGHT / 2;
+
+                if (i === 0) {
+                    canvasCtx.moveTo(x, y);
+                } else {
+                    canvasCtx.lineTo(x, y);
+                }
+
+                x += sliceWidth;
+            }
+
+            canvasCtx.lineTo(visualizer.width, visualizer.height / 2);
+            canvasCtx.stroke();
+
+            animationId = requestAnimationFrame(visualize);
+        }
+
+        function clearVisualizer() {
+            cancelAnimationFrame(animationId);
+            canvasCtx.clearRect(0, 0, visualizer.width, visualizer.height);
+        }
+
+        function setStatusTextWhileRecording() {
+            const intervalId = setInterval(() => {
+                const elapsedTime = (Date.now() - recordingStartedAt) / 1000;
+                const remainingTime = Math.max(0, 7 - elapsedTime);
+                statusText.textContent = `Recording... (speak naturally for at least ${remainingTime.toFixed(1)} seconds)`;
+
+                if (stopRecordButton.disabled === false) {
+                    clearInterval(intervalId);
+                }
+            }, 500);
+        }
+    </script>
+</body>
+</html>
