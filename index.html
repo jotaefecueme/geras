@@ -9,10 +9,14 @@
 <body>
     <div class="container">
         <h1>GERAS</h1>
-        <h2>- predicción de edad y género por voz -</h2>
+        <h2>- Predicción de Edad y Género por Voz -</h2>
         <div class="button-group">
             <button id="recordButton">Grabar</button>
             <button id="stopButton" disabled>Detener</button>
+        </div>
+        <p id="status">Listo para grabar.</p>
+        <div class="progress-container">
+            <div id="progressBar"></div>
         </div>
         <p id="prediction"></p>
     </div>
@@ -21,6 +25,9 @@
         let audioContext;
         let recorder;
         let audioBlob;
+        let timeoutId;
+        let startTime;
+        const recordingDuration = 10000; // 10 segundos en milisegundos
 
         document.getElementById('recordButton').addEventListener('click', async () => {
             audioContext = new (window.AudioContext || window.webkitAudioContext)({sampleRate: 16000});
@@ -34,17 +41,44 @@
                 audioBlob = new Blob(chunks, {type: 'audio/webm'});
                 document.getElementById('stopButton').disabled = true;
                 document.getElementById('recordButton').disabled = false;
+                document.getElementById('status').innerText = 'Grabación detenida.';
+                document.getElementById('progressBar').style.width = '0%';
                 await sendAudio();
             };
 
             recorder.start();
+            startTime = Date.now();
             document.getElementById('recordButton').disabled = true;
             document.getElementById('stopButton').disabled = false;
+            document.getElementById('status').innerText = 'Grabando...';
+
+            // Set a timeout to stop recording after 10 seconds
+            timeoutId = setTimeout(() => {
+                if (recorder.state !== 'inactive') {
+                    recorder.stop();
+                }
+            }, recordingDuration);
+
+            // Update progress bar
+            updateProgressBar();
         });
 
         document.getElementById('stopButton').addEventListener('click', () => {
+            clearTimeout(timeoutId);
             recorder.stop();
         });
+
+        function updateProgressBar() {
+            const intervalId = setInterval(() => {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min((elapsed / recordingDuration) * 100, 100);
+                document.getElementById('progressBar').style.width = `${progress}%`;
+
+                if (progress >= 100) {
+                    clearInterval(intervalId);
+                }
+            }, 100);
+        }
 
         async function sendAudio() {
             const formData = new FormData();
@@ -63,11 +97,11 @@
 
                 document.getElementById('prediction').innerHTML = `
                     <div class="prediction-item">
-                        <span class="prediction-title">Predicción de edad:</span>
+                        <span class="prediction-title">Predicción de Edad:</span>
                         <span class="prediction-value">${data.age} años (${data.age_category})</span>
                     </div>
                     <div class="prediction-item">
-                        <span class="prediction-title">Predicción de género:</span>
+                        <span class="prediction-title">Predicción de Género:</span>
                         <span class="prediction-value">${maxGender[0].charAt(0).toUpperCase() + maxGender[0].slice(1)}: ${maxGender[1].toFixed(2)}%</span>
                     </div>
                 `;
