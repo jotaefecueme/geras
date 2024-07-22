@@ -30,22 +30,22 @@ body {
 h1 {
     color: #333;
     margin-bottom: 10px;
-    font-size: 48px; /* Ajustado para pantallas pequeñas */
+    font-size: 48px;
     font-weight: 700;
     line-height: 1.2;
 }
 
 h2 {
     color: #777;
-    margin-bottom: 20px; /* Ajustado para pantallas pequeñas */
-    font-size: 20px; /* Ajustado para pantallas pequeñas */
+    margin-bottom: 20px;
+    font-size: 20px;
     font-weight: 300;
     font-style: italic;
 }
 
 .button-group {
     display: flex;
-    flex-direction: column; /* Coloca los botones en una columna en pantallas pequeñas */
+    flex-direction: column;
     gap: 15px;
 }
 
@@ -58,8 +58,8 @@ button {
     cursor: pointer;
     font-size: 18px;
     transition: background-color 0.3s ease, transform 0.3s ease;
-    width: 100%; /* Botones ocupan el 100% del ancho del contenedor */
-    box-sizing: border-box; /* Incluye padding y border en el ancho total */
+    width: 100%;
+    box-sizing: border-box;
 }
 
 button:hover {
@@ -80,6 +80,22 @@ p {
     color: #555;
     text-align: left;
     white-space: pre-line;
+}
+
+.progress-container {
+    margin-top: 20px;
+    background-color: #eee;
+    border-radius: 8px;
+    height: 8px;
+    width: 100%;
+    overflow: hidden;
+}
+
+#progressBar {
+    background-color: #007aff;
+    height: 100%;
+    width: 0%;
+    transition: width 0.1s;
 }
 
 .prediction-item {
