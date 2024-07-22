@@ -6,8 +6,8 @@
     <title>GERAS</title>
     <style>
         body {
-            font-family: 'San Francisco', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #f7f8fa, #e2e2e2);
+            font-family: Arial, sans-serif;
+            background: #f0f0f0;
             color: #333;
             margin: 0;
             padding: 0;
@@ -20,133 +20,62 @@
 
         .container {
             background: #ffffff;
-            border-radius: 16px;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
             padding: 20px;
             width: 100%;
-            max-width: 600px;
+            max-width: 400px;
             text-align: center;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .container:hover {
-            transform: scale(1.03);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
         }
 
         h1 {
-            color: #333;
+            font-size: 24px;
             margin-bottom: 10px;
-            font-size: 48px;
-            font-weight: 700;
-            line-height: 1.2;
         }
 
         h2 {
-            color: #777;
+            font-size: 16px;
             margin-bottom: 20px;
-            font-size: 20px;
-            font-weight: 300;
-            font-style: italic;
-        }
-
-        .button-group {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
         }
 
         button {
-            background-color: #007aff;
+            background-color: #007bff;
             color: white;
             border: none;
-            padding: 14px 28px;
-            border-radius: 10px;
+            padding: 12px;
+            border-radius: 4px;
             cursor: pointer;
-            font-size: 18px;
-            transition: background-color 0.3s ease, transform 0.3s ease;
-            width: 100%; /* Ocupa el 100% del ancho disponible en pantallas pequeñas */
-            box-sizing: border-box; /* Incluye padding y border en el ancho total */
-            min-height: 50px; /* Altura mínima para facilitar el toque */
-        }
-
-        button:hover {
-            background-color: #005bb5;
-            transform: translateY(-2px);
+            font-size: 16px;
+            width: 100%;
+            margin: 10px 0;
         }
 
         button:disabled {
-            background-color: #b0b0b0;
+            background-color: #cccccc;
             cursor: not-allowed;
-            transform: none;
         }
 
         p {
             margin-top: 20px;
-            font-size: 18px;
-            line-height: 1.6;
+            font-size: 14px;
             color: #555;
             text-align: left;
-            white-space: pre-line;
-        }
-
-        .prediction-item {
-            margin-bottom: 15px;
-            font-size: 18px;
-        }
-
-        .prediction-title {
-            font-weight: bold;
-            color: #333;
-        }
-
-        .prediction-value {
-            font-weight: normal;
-            color: #666;
         }
 
         #status {
-            margin-top: 20px;
-            font-size: 18px;
-            color: #007aff;
-            font-weight: bold;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 15px;
-            }
-
-            h1 {
-                font-size: 36px;
-            }
-
-            h2 {
-                font-size: 18px;
-                margin-bottom: 15px;
-            }
-
-            button {
-                font-size: 16px;
-                padding: 12px 24px;
-            }
-
-            p {
-                font-size: 16px;
-            }
+            margin-top: 10px;
+            font-size: 14px;
+            color: #007bff;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>GERAS</h1>
-        <h2>- Predicción de Edad y Género por Voz -</h2>
-        <div class="button-group">
-            <button id="recordButton">Grabar</button>
-            <button id="stopButton" disabled>Detener</button>
-        </div>
+        <h2>Predicción de Edad y Género por Voz</h2>
+        <button id="recordButton">Grabar</button>
+        <button id="stopButton" disabled>Detener</button>
         <p id="prediction"></p>
-        <div id="status"></div> <!-- Área para mostrar el temporizador y el estado de grabación -->
+        <div id="status"></div>
     </div>
 
     <script>
@@ -158,18 +87,16 @@
 
         document.getElementById('recordButton').addEventListener('click', async () => {
             if (recorder && recorder.state === 'recording') {
-                // Si ya está grabando, no hacer nada
                 return;
             }
 
-            audioContext = new (window.AudioContext || window.webkitAudioContext)({sampleRate: 16000});
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
             const stream = await navigator.mediaDevices.getUserMedia({audio: true});
-            const input = audioContext.createMediaStreamSource(stream);
-            recorder = new MediaRecorder(stream, {mimeType: 'audio/webm'});
+            recorder = new MediaRecorder(stream);
 
             let chunks = [];
             recorder.ondataavailable = e => chunks.push(e.data);
-            recorder.onstop = async e => {
+            recorder.onstop = async () => {
                 audioBlob = new Blob(chunks, {type: 'audio/webm'});
                 document.getElementById('stopButton').disabled = true;
                 document.getElementById('recordButton').disabled = false;
@@ -193,11 +120,6 @@
                     document.getElementById('status').innerText = `Grabando... ${timeLeft}s`;
                 }
             }, 1000);
-
-            // Feedback táctil
-            if (navigator.vibrate) {
-                navigator.vibrate([200, 100, 200]); // Vibrar durante la grabación
-            }
         });
 
         document.getElementById('stopButton').addEventListener('click', () => {
@@ -216,19 +138,16 @@
                 });
                 const data = await response.json();
 
-                // Determine the gender with the highest probability
                 const genderProbabilities = data.gender_probabilities;
                 const genderEntries = Object.entries(genderProbabilities);
                 const maxGender = genderEntries.reduce((max, entry) => entry[1] > max[1] ? entry : max, ['', 0]);
 
                 document.getElementById('prediction').innerHTML = `
-                    <div class="prediction-item">
-                        <span class="prediction-title">Predicción de Edad:</span>
-                        <span class="prediction-value">${data.age} años (${data.age_category})</span>
+                    <div>
+                        <strong>Predicción de Edad:</strong> ${data.age} años (${data.age_category})
                     </div>
-                    <div class="prediction-item">
-                        <span class="prediction-title">Predicción de Género:</span>
-                        <span class="prediction-value">${maxGender[0].charAt(0).toUpperCase() + maxGender[0].slice(1)}: ${maxGender[1].toFixed(2)}%</span>
+                    <div>
+                        <strong>Predicción de Género:</strong> ${maxGender[0].charAt(0).toUpperCase() + maxGender[0].slice(1)}: ${maxGender[1].toFixed(2)}%
                     </div>
                 `;
             } catch (error) {
