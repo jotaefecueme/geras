@@ -6,7 +6,7 @@
     <title>GERAS</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'San Francisco', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             background: #f0f0f0;
             color: #333;
             margin: 0;
@@ -20,33 +20,42 @@
 
         .container {
             background: #ffffff;
-            border-radius: 8px;
-            padding: 20px;
+            border-radius: 12px;
+            padding: 30px;
             width: 100%;
             max-width: 400px;
             text-align: center;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
         }
 
         h1 {
-            font-size: 24px;
+            font-size: 32px;
             margin-bottom: 10px;
+            color: #333;
         }
 
         h2 {
-            font-size: 16px;
+            font-size: 18px;
             margin-bottom: 20px;
+            color: #666;
         }
 
         button {
-            background-color: #007bff;
+            background-color: #007aff;
             color: white;
             border: none;
-            padding: 12px;
-            border-radius: 4px;
+            padding: 14px;
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 18px;
             width: 100%;
             margin: 10px 0;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        button:hover {
+            background-color: #005bb5;
+            transform: translateY(-2px);
         }
 
         button:disabled {
@@ -56,22 +65,46 @@
 
         p {
             margin-top: 20px;
-            font-size: 14px;
+            font-size: 16px;
             color: #555;
             text-align: left;
         }
 
         #status {
             margin-top: 10px;
-            font-size: 14px;
-            color: #007bff;
+            font-size: 16px;
+            color: #007aff;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 28px;
+            }
+
+            h2 {
+                font-size: 16px;
+                margin-bottom: 15px;
+            }
+
+            button {
+                font-size: 16px;
+                padding: 12px;
+            }
+
+            p {
+                font-size: 14px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>GERAS</h1>
-        <h2>Predicción de Edad y Género por Voz</h2>
+        <h2>- predicción de edad y género por voz -</h2>
         <button id="recordButton">Grabar</button>
         <button id="stopButton" disabled>Detener</button>
         <p id="prediction"></p>
@@ -109,7 +142,7 @@
             document.getElementById('recordButton').disabled = true;
             document.getElementById('stopButton').disabled = false;
             document.getElementById('status').innerText = 'Grabando... 10s';
-            
+
             let timeLeft = RECORD_TIME / 1000;
             timerInterval = setInterval(() => {
                 timeLeft--;
@@ -144,10 +177,10 @@
 
                 document.getElementById('prediction').innerHTML = `
                     <div>
-                        <strong>Predicción de Edad:</strong> ${data.age} años (${data.age_category})
+                        <strong>Predicción de edad:</strong> ${data.age} (${data.age_category})
                     </div>
                     <div>
-                        <strong>Predicción de Género:</strong> ${maxGender[0].charAt(0).toUpperCase() + maxGender[0].slice(1)}: ${maxGender[1].toFixed(2)}%
+                        <strong>Predicción de género:</strong> ${maxGender[0].charAt(0).toUpperCase() + maxGender[0].slice(1)}: ${maxGender[1].toFixed(2)}%
                     </div>
                 `;
             } catch (error) {
