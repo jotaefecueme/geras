@@ -15,7 +15,7 @@ body {
     background: #ffffff;
     border-radius: 16px;
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-    padding: 40px;
+    padding: 20px;
     width: 100%;
     max-width: 600px;
     text-align: center;
@@ -30,22 +30,22 @@ body {
 h1 {
     color: #333;
     margin-bottom: 10px;
-    font-size: 64px;
+    font-size: 48px; /* Ajustado para pantallas pequeñas */
     font-weight: 700;
     line-height: 1.2;
 }
 
 h2 {
     color: #777;
-    margin-bottom: 30px;
-    font-size: 24px;
+    margin-bottom: 20px; /* Ajustado para pantallas pequeñas */
+    font-size: 20px; /* Ajustado para pantallas pequeñas */
     font-weight: 300;
     font-style: italic;
 }
 
 .button-group {
     display: flex;
-    justify-content: center;
+    flex-direction: column; /* Coloca los botones en una columna en pantallas pequeñas */
     gap: 15px;
 }
 
@@ -58,6 +58,8 @@ button {
     cursor: pointer;
     font-size: 18px;
     transition: background-color 0.3s ease, transform 0.3s ease;
+    width: 100%; /* Botones ocupan el 100% del ancho del contenedor */
+    box-sizing: border-box; /* Incluye padding y border en el ancho total */
 }
 
 button:hover {
@@ -73,7 +75,7 @@ button:disabled {
 
 p {
     margin-top: 20px;
-    font-size: 20px;
+    font-size: 18px;
     line-height: 1.6;
     color: #555;
     text-align: left;
@@ -93,4 +95,29 @@ p {
 .prediction-value {
     font-weight: normal;
     color: #666;
+}
+
+/* Media Queries para Dispositivos Móviles */
+@media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+
+    h1 {
+        font-size: 36px;
+    }
+
+    h2 {
+        font-size: 18px;
+        margin-bottom: 15px;
+    }
+
+    button {
+        font-size: 16px;
+        padding: 12px 24px;
+    }
+
+    p {
+        font-size: 16px;
+    }
 }
