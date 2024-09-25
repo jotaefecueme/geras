@@ -201,13 +201,36 @@
                 const data = await response.json();
 
                 // Manejo de respuestas simplificadas
-                if (data.group) {
-                    predictionDiv.innerHTML = `<strong>Resultado:</strong> ${data.group}`;
-                } else {
-                    predictionDiv.innerHTML = `<strong>Género:</strong> ${data.gender}, <strong>Edad:</strong> ${data.age}`;
-                }
+                let gender = data.gender || 'desconocido';
+                let age = data.age || 'desconocida';
+                predictionDiv.innerHTML = `<strong>Género:</strong> ${gender}, <strong>Edad:</strong> ${age}`;
+
+                // Crear el nombre del archivo basado en las predicciones
+                const fileName = `prediccion_género_${gender}_edad_${age}.webm`;
+
+                // Enviar el audio y el nombre del archivo al servidor para guardarlo
+                await saveAudioFile(audioBlob, fileName); // Implementa esta función en tu servidor
+
             } catch (error) {
                 predictionDiv.innerText = 'Error al procesar la predicción: ' + error.message;
+            }
+        }
+
+        async function saveAudioFile(blob, fileName) {
+            const formData = new FormData();
+            formData.append('file', blob, fileName);
+
+            try {
+                const response = await fetch('https://python-quality-fully.ngrok-free.app/save_audio', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('Error al guardar el archivo en el servidor.');
+                }
+            } catch (error) {
+                console.error('Error al guardar el archivo:', error);
             }
         }
 
